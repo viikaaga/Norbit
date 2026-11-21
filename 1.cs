@@ -1,96 +1,56 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
 namespace Norbit.Tasks.TypeOfData
 {
     /// <summary>
-    /// Калькулятор вклада.
+    /// Класс для выполнения расчетов по финансовым задачам.
     /// </summary>
-    public class DepositCalculator
+    public class CompoundInterestCalculator
     {
         /// <summary>
-        /// Вычисляет сложный процент по годам.
-        /// </summary>
-        /// <param name="initialDeposit">Стартовый размер вклада.</param>
-        /// <param name="years">Количество лет.</param>
-        /// <param name="interestRate">Годовая процентная ставка.</param>
-        /// <returns>Список кортежей (год, сумма накоплений).</returns>
-        public static List<(int year, double deposit)> CalculateCompoundInterest(
-            double initialDeposit, int years, double interestRate)
-        {
-            #region Валидация
-            CheckIsPositive(initialDeposit, "Стартовый размер вклада ожидается > 0.");
-            CheckIsPositive(years, "Кол-во лет ожидается > 0.");
-            CheckIsPositive(interestRate, "Ставка ожидается > 0.");
-            #endregion
-
-            double amount = initialDeposit;
-            var result = new List<(int year, double deposit)>();
-
-            for (int i = 1; i <= years; i++)
-            {
-                amount += amount / 100 * interestRate;
-                result.Add((i, amount));
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Формирует и возвращает строку с расчетом сложных процентов по годам.
+        /// Формирует строку с расчетом сложных процентов по годам.
         /// </summary>
         /// <param name="initialDeposit">Начальный вклад (положительное число).</param>
         /// <param name="years">Количество лет (положительное целое число).</param>
         /// <param name="interestRate">Годовая процентная ставка (положительное число).</param>
-        /// <returns>Строка с расчетом накоплений по годам.</returns>
-        public static string GetCompoundInterestString(
-            double initialDeposit, int years, double interestRate)
+        /// <returns>Строка с поэтапным расчетом накоплений.</returns>
+        public static string CalculateCompoundInterest(decimal initialDeposit, int years, decimal interestRate)
         {
-            var calculations = CalculateCompoundInterest(initialDeposit, years, interestRate);
-            var stringBuilder = new StringBuilder();
+            #region Валидация
 
-            foreach (var item in calculations)
+            CheckIsPositive(initialDeposit, nameof(initialDeposit), "Стартовый размер вклада должен быть больше 0.");
+            CheckIsPositive(years, nameof(years), "Количество лет должно быть больше 0.");
+            CheckIsPositive(interestRate, nameof(interestRate), "Процентная ставка должна быть больше 0.");
+
+            #endregion
+
+            var stringBuilder = new StringBuilder();
+            decimal currentAmount = initialDeposit;
+
+            for (int year = 1; year <= years; year++)
             {
-                // CultureInfo.InvariantCulture гарантирует точку (1100.00), а не запятую (1100,00)
-                string formattedAmount = item.deposit.ToString("F2", CultureInfo.InvariantCulture);
-                stringBuilder.AppendLine($"Год {item.year}: {formattedAmount} руб.");
+                // Формула сложного процента за 1 год
+                currentAmount += currentAmount * (interestRate / 100m);
+
+                // InvariantCulture гарантирует точку в качестве разделителя (1100.00), как в условии
+                stringBuilder.AppendLine($"Год {year}: {currentAmount.ToString("F2", CultureInfo.InvariantCulture)} руб.");
             }
 
+            // Убираем последний перевод строки, чтобы вывод был чистым
             return stringBuilder.ToString().TrimEnd();
         }
 
         /// <summary>
-        /// Проверяет, что <paramref name="value"/> положительное.
+        /// Проверяет, что значение аргумента строго больше нуля.
         /// </summary>
-        /// <param name="value">Проверяемое значение.</param>
-        /// <param name="errorMessage">Сообщение об ошибке.</param>
-        /// <exception cref="ArgumentOutOfRangeException">Если <paramref name="value"/> меньше или равно нулю.</exception>
-        private static void CheckIsPositive(double value, string errorMessage)
+        private static void CheckIsPositive(decimal value, string paramName, string errorMessage)
         {
             if (value <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(value), errorMessage);
+                throw new ArgumentOutOfRangeException(paramName, errorMessage);
             }
-        }
-    }
-
-    /// <summary>
-    /// Точка входа в программу для тестирования.
-    /// </summary>
-    public class Program
-    {
-        public static void Main()
-        {
-            // Тестовые данные из условия задачи
-            double initialDeposit = 1000;
-            int years = 3;
-            double interestRate = 10;
-
-            string report = DepositCalculator.GetCompoundInterestString(initialDeposit, years, interestRate);
-            
-            Console.WriteLine(report);
         }
     }
 }
